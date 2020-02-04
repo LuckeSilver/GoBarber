@@ -1,7 +1,8 @@
-import express from 'express';
-import routes from './routes';
+import express from "express";
+import cors from "cors";
 
-import './database';
+import routes from "./routes";
+import "./database";
 
 class App {
   //O método constructor é executado automáticamente
@@ -14,6 +15,7 @@ class App {
   }
 
   middlewares() {
+    this.server.use(cors());
     this.server.use(express.json());
   }
 
