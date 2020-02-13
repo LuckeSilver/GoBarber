@@ -1,6 +1,7 @@
 import User from "../models/User";
 import Appointment from "../models/Appointment";
 import * as Yup from "yup";
+import { startOfHour, parseISO, isBefore } from "date-fns";
 
 class AppointmentController {
   async store(req, res) {
@@ -29,10 +30,34 @@ class AppointmentController {
         .json({ error: "You can only appointments with providers" });
     }
 
+    // Checando se a data do agendamento já passou ou é uma data válida
+    const hourStart = startOfHour(parseISO(date));
+
+    if (isBefore(hourStart, new Date())) {
+      return res.status(400).json({ error: "Essa data já passou." });
+    }
+
+    // Checando se o prestador de serviços já tem algo marcado
+    //para o horário selecionado
+
+    const checkAvailability = await Appointment.findOne({
+      where: {
+        provider_id,
+        canceled_at: null,
+        date: hourStart
+      }
+    });
+
+    if (checkAvailability) {
+      return res
+        .status(400)
+        .json({ error: "O horário escolhido não está vago" });
+    }
+
     const appointment = await Appointment.create({
       user_id: req.userId,
       provider_id,
-      date
+      date: hourStart
     });
 
     return res.json(appointment);
